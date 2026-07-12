@@ -107,7 +107,7 @@ async function run() {
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
         const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
         
-        message += `\`${paddedName} | ${gPrice} | ${vPrice} ৳\`\n`;
+        message += `\`${paddedName} | ${gPrice} | ${vPrice} \`\n`;
     });
 
     await sendTelegramMessage(message);
