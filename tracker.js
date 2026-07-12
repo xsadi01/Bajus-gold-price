@@ -9,7 +9,7 @@ const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || "your-username/your-repo"; 
 
 const LAST_PRICE_FILE = path.join(__dirname, 'last_price.json');
-const IMAGE_OUTPUT_FILE = path.join(__dirname, 'print.png');
+const IMAGE_OUTPUT_FILE = path.join(__dirname, 'thermal_print.png');
 const TARGET_URL = 'https://www.goldr.org/price.js?gttm';
 
 const nameMapping = {
@@ -113,7 +113,7 @@ async function sendTelegramNotification(message, imageUrl) {
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     const replyMarkup = {
         inline_keyboard: [[
-            { text: "📥 Download Print Copy", url: imageUrl }
+            { text: "Download", url: imageUrl }
         ]]
     };
 
@@ -138,18 +138,19 @@ async function run() {
     const currentData = await getLatestMarketData();
     if (!currentData) return;
 
+    // ১. গিটহাব অ্যাকশনের এরর এড়াতে দাম চেকের আগেই ইমেজ ফাইল তৈরি করে রাখা হলো
+    generateThermalImage(currentData);
+
     let oldData = null;
     if (fs.existsSync(LAST_PRICE_FILE)) {
         try { oldData = JSON.parse(fs.readFileSync(LAST_PRICE_FILE, 'utf8')); } catch (e) { oldData = null; }
     }
 
+    // ২. দাম পরিবর্তন না হলে এখানে স্ক্রিপ্ট স্টপ হবে, কিন্তু ইমেজ ফাইল গিটহাবে থেকে যাবে
     if (oldData && JSON.stringify(currentData.goldData) === JSON.stringify(oldData.goldData)) {
-        console.log("No price change detected.");
+        console.log("No price change detected. Image updated but skipping telegram alert.");
         return;
     }
-
-    // ইমেজ ও টেক্সট রেডি করা
-    generateThermalImage(currentData);
 
     let message = `🔔 *GOLD PRICE UPDATED*\n`;
     message += `📅 \`${currentData.updateDate}\`\n\n`;
@@ -161,7 +162,7 @@ async function run() {
         const paddedName = name.padEnd(8, ' ');
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
         const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
-        message += `\`${paddedName} | ${gPrice} | ${vPrice} ৳\`\n`;
+        message += `\`${paddedName} | ${gPrice} | ${vPrice} \`\n`;
     });
 
     const rawImageUrl = `https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/thermal_print.png?t=${Date.now()}`;
