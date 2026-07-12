@@ -1,4 +1,4 @@
-name: Hourly Gold Price Checker
+name: Gold Price Checker
 
 on:
   schedule:
