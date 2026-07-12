@@ -1,9 +1,10 @@
 {
   "name": "gold-price-tracker",
   "version": "1.0.0",
-  "description": "Track gold price and notify via Telegram",
+  "description": "Track gold price and notify via Telegram with Thermal PNG",
   "main": "tracker.js",
   "dependencies": {
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "canvas": "^2.11.2"
   }
 }
