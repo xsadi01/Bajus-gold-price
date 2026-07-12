@@ -2,15 +2,15 @@ name: Gold Price Checker
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # প্রতি ৩০ মিনিট পর পর স্বয়ংক্রিয়ভাবে রান হবেে
-  workflow_dispatch:      # যেন আপনি চাইলে ম্যানুয়ালিও টেস্ট রান করতে পারেন
+    - cron: '*/30 * * * *'  # প্রতি ৩০ মিনিট পর পর
+  workflow_dispatch:        # ম্যানুয়ালি টেস্ট করার জন্য
 
 jobs:
   check-price:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write # গিটহাবে ফাইল পুশ করার পারমিশন
+      contents: write
 
     steps:
     - name: Checkout Repository
@@ -19,7 +19,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-node-version: '18'
+        node-version: '18'
 
     - name: Install Dependencies
       run: npm install
@@ -35,6 +35,5 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add last_price.json
-        git diff-index --quiet HEAD || git commit -m "Update last price [skip ci]" && git push
-      
+        git add last_price.json thermal_print.png
+        git diff-index --quiet HEAD || git commit -m "Update last price and thermal image [skip ci]" && git push
