@@ -1,0 +1,41 @@
+name: Hourly Gold Price Checker
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # প্রতি ১ ঘণ্টা (0 মিনিটে) পর পর রান হবে
+  workflow_dispatch:      # যেন আপনি চাইলে ম্যানুয়ালিও টেস্ট রান করতে পারেন
+
+jobs:
+  check-price:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      contents: read  # গিটহাবে ফাইল পুশ করার পারমিশন
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-node-version: '18'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Run Tracker Script
+      id: tracker
+      env:
+        TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: node tracker.js
+
+    - name: Commit and Push if price changed
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add last_price.json
+        git diff-index --quiet HEAD || git commit -m "Update last price [skip ci]" && git push
+      
