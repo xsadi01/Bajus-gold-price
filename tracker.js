@@ -3,7 +3,6 @@ const path = require('path');
 const fetch = require('node-fetch');
 const { createCanvas } = require('canvas');
 
-// গিটহাব সিক্রেটস বা লোকাল এনভায়রনমেন্ট থেকে ডাটা রিড করা
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || "xsadi01/Bajus-gold-price"; 
@@ -12,11 +11,12 @@ const LAST_PRICE_FILE = path.join(__dirname, 'last_price.json');
 const IMAGE_OUTPUT_FILE = path.join(__dirname, 'thermal_print.png');
 const TARGET_URL = 'https://www.goldr.org/price.js?gttm';
 
+// ইমেজ অনুযায়ী নামগুলো ছোট (Short) করা হলো
 const nameMapping = {
-    "২২ ক্যারেট সোনার দাম": "22K Gold",
-    "২১ ক্যারেট সোনার দাম": "21K Gold",
-    "১৮ ক্যারেট সোনার দাম": "18K Gold",
-    "সনাতন পদ্ধতির সোনার দাম": "Sanatan"
+    "২২ ক্যারেট সোনার দাম": "22K-",
+    "২১ ক্যারেট সোনার দাম": "21K-",
+    "১৮ ক্যারেট সোনার দাম": "18K-",
+    "সনাতন পদ্ধতির সোনার দাম": "SAN-"
 };
 
 async function getLatestMarketData() {
@@ -39,10 +39,10 @@ async function getLatestMarketData() {
     }
 }
 
-// থার্মাল প্রিন্টারের জন্য (384px চওড়া) B&W ইমেজ তৈরি করার ফাংশন
+// একদম ইমেজের মতো পিওর ব্ল্যাক অ্যান্ড হোয়াইট মিনিমাল ইমেজ জেনারেশন
 function generateThermalImage(data) {
     const width = 384; 
-    const height = 450; 
+    const height = 180; // এক্সট্রা সবকিছু বাদ দেওয়ায় হাইট একদম ছোট ও কম্প্যাক্ট করা হয়েছে
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -50,58 +50,27 @@ function generateThermalImage(data) {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
 
-    ctx.fillStyle = '#000000'; // পিওর ব্ল্যাক টেক্সট
-
-    // হেডার
-    ctx.font = 'bold 24px sans-serif';
+    ctx.fillStyle = '#000000'; // পিওর ব্ল্যাক ফন্ট
     ctx.textAlign = 'center';
-    ctx.fillText('GOLD PRICE REPORT', width / 2, 40);
+    
+    // ফন্ট সাইজ আগের চেয়ে একটু ছোট এবং বোল্ড করা হয়েছে থার্মাল প্রিন্টের জন্য
+    ctx.font = 'bold 22px sans-serif'; 
 
-    ctx.font = '16px sans-serif';
-    ctx.fillText(`Date: ${data.updateDate}`, width / 2, 70);
-
-    // ডিভাইডার লাইন
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#000000';
-    ctx.beginPath();
-    ctx.moveTo(20, 90);
-    ctx.lineTo(width - 20, 90);
-    ctx.stroke();
-
-    // গোল্ড রেট লুপ
-    let currentY = 130;
-    ctx.textAlign = 'left';
+    let currentY = 35;
 
     data.goldData.forEach(item => {
         const name = nameMapping[item.n] || item.n;
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 });
-        const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-        ctx.font = 'bold 20px sans-serif';
-        ctx.fillText(`■ ${name}`, 20, currentY);
+        // জাস্ট মাঝখানে টেক্সট বসবে: "22K- 19,405 TK"
+        ctx.fillText(`${name} ${gPrice} TK`, width / 2, currentY);
         
-        ctx.font = '18px sans-serif';
-        currentY += 28;
-        ctx.fillText(`  Per Gram : ${gPrice} TK`, 20, currentY);
-        currentY += 26;
-        ctx.fillText(`  Per Vori : ${vPrice} TK`, 20, currentY);
-        
-        currentY += 40; 
+        currentY += 38; // প্রতি লাইনের মধ্যকার স্পেসিং
     });
-
-    // ফুটার ডিভাইডার
-    ctx.beginPath();
-    ctx.moveTo(20, currentY - 15);
-    ctx.lineTo(width - 20, currentY - 15);
-    ctx.stroke();
-
-    ctx.font = 'italic 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Printed by SSS', width / 2, currentY + 10);
 
     const buffer = canvas.toBuffer('image/png');
     fs.writeFileSync(IMAGE_OUTPUT_FILE, buffer);
-    console.log("Thermal PNG image generated successfully.");
+    console.log("Image style updated perfectly.");
 }
 
 async function sendTelegramNotification(message, imageUrl) {
@@ -128,7 +97,7 @@ async function sendTelegramNotification(message, imageUrl) {
                 reply_markup: replyMarkup
             })
         });
-        console.log("Notification with download button sent to Telegram.");
+        console.log("Notification sent.");
     } catch (error) {
         console.error("Telegram error:", error);
     }
@@ -138,7 +107,6 @@ async function run() {
     const currentData = await getLatestMarketData();
     if (!currentData) return;
 
-    // ১. গিটহাব অ্যাকশনের এরর এড়াতে দাম চেকের আগেই ইমেজ ফাইল তৈরি করে রাখা হলো
     generateThermalImage(currentData);
 
     let oldData = null;
@@ -146,7 +114,6 @@ async function run() {
         try { oldData = JSON.parse(fs.readFileSync(LAST_PRICE_FILE, 'utf8')); } catch (e) { oldData = null; }
     }
 
-    // ২. দাম পরিবর্তন না হলে এখানে স্ক্রিপ্ট স্টপ হবে, কিন্তু ইমেজ ফাইল গিটহাবে থেকে যাবে
     if (oldData && JSON.stringify(currentData.goldData) === JSON.stringify(oldData.goldData)) {
         console.log("No price change detected. Image updated but skipping telegram alert.");
         return;
@@ -159,10 +126,10 @@ async function run() {
     
     currentData.goldData.forEach(item => {
         const name = nameMapping[item.n] || item.n;
-        const paddedName = name.padEnd(8, ' ');
+        const cleanName = name.replace('-', '').padEnd(8, ' ');
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
         const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
-        message += `\`${paddedName} | ${gPrice} | ${vPrice} \`\n`;
+        message += `\`${cleanName} | ${gPrice} | ${vPrice} \`\n`;
     });
 
     const rawImageUrl = `https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/thermal_print.png?t=${Date.now()}`;
