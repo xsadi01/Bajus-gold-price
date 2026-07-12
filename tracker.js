@@ -6,7 +6,7 @@ const { createCanvas } = require('canvas');
 // গিটহাব সিক্রেটস বা লোকাল এনভায়রনমেন্ট থেকে ডাটা রিড করা
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || "your-username/your-repo"; 
+const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || "xsadi01/Bajus-gold-price"; 
 
 const LAST_PRICE_FILE = path.join(__dirname, 'last_price.json');
 const IMAGE_OUTPUT_FILE = path.join(__dirname, 'thermal_print.png');
