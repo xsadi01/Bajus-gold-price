@@ -10,8 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write
-      contents: read  # গিটহাবে ফাইল পুশ করার পারমিশন
+      contents: write # গিটহাবে ফাইল পুশ করার পারমিশন
 
     steps:
     - name: Checkout Repository
