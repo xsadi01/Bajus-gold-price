@@ -1,9 +1,9 @@
-name: Gold Price Checker
+name: 30-Min Gold Price Checker
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # প্রতি ৩০ মিনিট পর পর
-  workflow_dispatch:        # ম্যানুয়ালি টেস্ট করার জন্য
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   check-price:
