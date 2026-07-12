@@ -121,15 +121,15 @@ async function run() {
 
     let message = `🔔 *GOLD PRICE UPDATED*\n`;
     message += `📅 \`${currentData.updateDate}\`\n\n`;
-    message += `\`Type     | Per Gram | Per Vori \`\n`;
-    message += `\`---------------------------------\`\n`;
+    message += `\`Type   | Per Gram | Per Vori \`\n`;
+    message += `\`-------------------------------\`\n`;
     
     currentData.goldData.forEach(item => {
         const name = nameMapping[item.n] || item.n;
         const cleanName = name.replace('-', '').padEnd(8, ' ');
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
         const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
-        message += `\`${cleanName} | ${gPrice} | ${vPrice} \`\n`;
+        message += `\`${cleanName} | ${gPrice} | ${vPrice} ৳\`\n`;
     });
 
     const rawImageUrl = `https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/thermal_print.png?t=${Date.now()}`;
