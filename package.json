@@ -1,0 +1,9 @@
+{
+  "name": "gold-price-tracker",
+  "version": "1.0.0",
+  "description": "Track gold price and notify via Telegram",
+  "main": "tracker.js",
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  }
+}
