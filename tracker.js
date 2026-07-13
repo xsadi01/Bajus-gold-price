@@ -39,10 +39,9 @@ async function getLatestMarketData() {
     }
 }
 
-// একদম ইমেজের মতো পিওর ব্ল্যাক অ্যান্ড হোয়াইট মিনিমাল ইমেজ জেনারেশন
 function generateThermalImage(data) {
     const width = 384; 
-    const height = 210; // এক্সট্রা সবকিছু বাদ দেওয়ায় হাইট একদম ছোট ও কম্প্যাক্ট করা হয়েছে
+    const height = 190; // ফন্ট সাইজ ১ সাইজ কমানোয় হাইটও ১৯০ তে অপ্টিমাইজ করা হয়েছে
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -53,19 +52,19 @@ function generateThermalImage(data) {
     ctx.fillStyle = '#000000'; // পিওর ব্ল্যাক ফন্ট
     ctx.textAlign = 'center';
     
-    // ফন্ট সাইজ আগের চেয়ে একটু ছোট এবং বোল্ড করা হয়েছে থার্মাল প্রিন্টের জন্য
-    ctx.font = 'bold 32px sans-serif'; 
+    // ফন্ট সাইজ ২৮ এবং ইমেজের সাথে মিল রেখে sans-serif বোল্ড ব্যবহার করা হয়েছে
+    ctx.font = 'bold 28px sans-serif'; 
 
-    let currentY = 35;
+    let currentY = 40; // প্রথম লাইনের শুরুর পজিশন
 
     data.goldData.forEach(item => {
         const name = nameMapping[item.n] || item.n;
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-        // জাস্ট মাঝখানে টেক্সট বসবে: "22K- 19,405 TK"
+        // পুরো লাইনটি পেপারের মাঝখানে ইমেজের মতো সুন্দরভাবে বসে যাবে শেষে TK সহ
         ctx.fillText(`${name} ${gPrice} TK`, width / 2, currentY);
         
-        currentY += 38; // প্রতি লাইনের মধ্যকার স্পেসিং
+        currentY += 42; // প্রতি লাইনের মধ্যকার স্পেসিং
     });
 
     const buffer = canvas.toBuffer('image/png');
