@@ -126,9 +126,9 @@ async function run() {
     
     currentData.goldData.forEach(item => {
         const name = nameMapping[item.n] || item.n;
-        const cleanName = name.replace('-', '').padEnd(8, ' ');
-        const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
-        const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(8, ' ');
+        const cleanName = name.replace('-', '').padEnd(6, ' ');
+        const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(6, ' ');
+        const vPrice = Number(item.bv_raw).toLocaleString('en-US', { maximumFractionDigits: 0 }).padEnd(6, ' ');
         message += `\`${cleanName} | ${gPrice} | ${vPrice} ৳\`\n`;
     });
 
