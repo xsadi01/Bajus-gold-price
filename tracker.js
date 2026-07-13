@@ -39,9 +39,12 @@ async function getLatestMarketData() {
     }
 }
 
+// ইমেজ সাইজ ও ফন্ট রেশিও হুবহু সেম রেখে ব্ল্যাক অ্যান্ড হোয়াইট করার ফাংশন
 function generateThermalImage(data) {
+    // থার্মাল প্রিন্টারের ফুল পেপার সাইজ (যাতে সাইডে কোনো ফাঁকা না থাকে)
     const width = 384; 
-    const height = 190; // ফন্ট সাইজ ১ সাইজ কমানোয় হাইটও ১৯০ তে অপ্টিমাইজ করা হয়েছে
+    const height = 256; // আপনার ইমেজের হাইট-উইডথ অনুপাত (1000x667) অনুযায়ী পারফেক্ট স্কেলিং
+    
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -49,22 +52,26 @@ function generateThermalImage(data) {
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, width, height);
 
-    ctx.fillStyle = '#000000'; // পিওর ব্ল্যাক ফন্ট
-    ctx.textAlign = 'center';
+    ctx.fillStyle = '#000000'; // পিওর ব্ল্যাক কালার
     
-    // ফন্ট সাইজ ২৮ এবং ইমেজের সাথে মিল রেখে sans-serif বোল্ড ব্যবহার করা হয়েছে
-    ctx.font = 'bold 28px sans-serif'; 
+    // আপনার ইমেজের মতো বিশাল বোল্ড ফন্ট (৩৮৪ উইডথ এর জন্য ৪৪px একদম ফুল সাইড কভার করবে)
+    ctx.font = 'bold 44px Arial, sans-serif'; 
 
-    let currentY = 40; // প্রথম লাইনের শুরুর পজিশন
+    let currentY = 52; // শুরুর ওয়াই পজিশন
 
     data.goldData.forEach(item => {
         const name = nameMapping[item.n] || item.n;
         const gPrice = Number(item.bg_raw).toLocaleString('en-US', { maximumFractionDigits: 0 });
 
-        // পুরো লাইনটি পেপারের মাঝখানে ইমেজের মতো সুন্দরভাবে বসে যাবে শেষে TK সহ
-        ctx.fillText(`${name} ${gPrice} TK`, width / 2, currentY);
+        // বাম পাশে নাম (22K-)
+        ctx.textAlign = 'left';
+        ctx.fillText(name, 10, currentY);
+
+        // ডান পাশে প্রাইস এবং শেষে TK
+        ctx.textAlign = 'right';
+        ctx.fillText(`${gPrice} TK`, width - 10, currentY);
         
-        currentY += 42; // প্রতি লাইনের মধ্যকার স্পেসিং
+        currentY += 62; // আপনার ইমেজের মতো লাইন টু লাইন বড় গ্যাপ (Row Spacing)
     });
 
     const buffer = canvas.toBuffer('image/png');
