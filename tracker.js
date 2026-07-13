@@ -42,7 +42,7 @@ async function getLatestMarketData() {
 // একদম ইমেজের মতো পিওর ব্ল্যাক অ্যান্ড হোয়াইট মিনিমাল ইমেজ জেনারেশন
 function generateThermalImage(data) {
     const width = 384; 
-    const height = 180; // এক্সট্রা সবকিছু বাদ দেওয়ায় হাইট একদম ছোট ও কম্প্যাক্ট করা হয়েছে
+    const height = 210; // এক্সট্রা সবকিছু বাদ দেওয়ায় হাইট একদম ছোট ও কম্প্যাক্ট করা হয়েছে
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext('2d');
 
@@ -54,7 +54,7 @@ function generateThermalImage(data) {
     ctx.textAlign = 'center';
     
     // ফন্ট সাইজ আগের চেয়ে একটু ছোট এবং বোল্ড করা হয়েছে থার্মাল প্রিন্টের জন্য
-    ctx.font = 'bold 22px sans-serif'; 
+    ctx.font = 'bold 32px sans-serif'; 
 
     let currentY = 35;
 
