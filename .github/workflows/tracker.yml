@@ -5,13 +5,19 @@ on:
     - cron: '0/15 * * * *' # প্রতি ১ ঘণ্টা পর পর অটো রান হবে
   workflow_dispatch:     # ম্যানুয়ালি রান করার অপশন
 
+# Push পারমিশন নিশ্চিত করার জন্য যুক্ত করা হয়েছে
+permissions:
+  contents: write
+
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true # Git push এর জন্য প্রোপার টোকেন নিশ্চিত করে
 
       - name: Set up Python
         uses: actions/setup-python@v4
