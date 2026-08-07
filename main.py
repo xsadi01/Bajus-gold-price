@@ -19,10 +19,6 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LAST_PRICE_FILE = os.path.join(SCRIPT_DIR, "last_price.json")
 SERVICE_ACCOUNT_FILE = os.path.join(SCRIPT_DIR, "serviceAccountKey.json")
 
-# ফাইল পাথ
-THERMAL_IMAGE_FILE = os.path.join(SCRIPT_DIR, "thermal_print.png")
-COLOR_IMAGE_FILE = os.path.join(SCRIPT_DIR, "color_price.png")
-
 TARGET_URL = "https://www.goldr.org/price.js?gttm"
 
 # নাম ছোট করার ম্যাপ
@@ -125,7 +121,7 @@ def get_bold_font(font_size):
 
 
 # --- ৫. থার্মাল ইমেজ জেনারেটর ---
-def generate_thermal_image(data):
+def generate_thermal_image(data, file_path):
     width = 384
     height = 256
 
@@ -152,12 +148,12 @@ def generate_thermal_image(data):
         draw.text((x_right, current_y), right_text, fill=(0, 0, 0), font=font)
         current_y += 62
 
-    img.save(THERMAL_IMAGE_FILE)
-    print("Thermal image generated.")
+    img.save(file_path)
+    print(f"Thermal image generated: {os.path.basename(file_path)}")
 
 
 # --- ৬. স্বচ্ছ কালার ইমেজ জেনারেটর (Zoomed / Enlarged) ---
-def generate_color_image(data):
+def generate_color_image(data, file_path):
     width = 1000
     height = 667
 
@@ -188,8 +184,8 @@ def generate_color_image(data):
 
         current_y += 162
 
-    img.save(COLOR_IMAGE_FILE, "PNG")
-    print("Zoomed Transparent Color image generated successfully.")
+    img.save(file_path, "PNG")
+    print(f"Zoomed Transparent Color image generated: {os.path.basename(file_path)}")
 
 
 # --- ৭. টেলিগ্রাম নোটিফিকেশন ---
@@ -227,12 +223,21 @@ def run():
     if not current_data:
         return
 
+    update_date = current_data.get("updateDate", datetime.now().strftime("%Y-%m-%d"))
+
+    # তারিখ অনুযায়ী ইমেজের নাম
+    thermal_filename = f"thermal_print_{update_date}.png"
+    color_filename = f"color_price_{update_date}.png"
+
+    thermal_image_file = os.path.join(SCRIPT_DIR, thermal_filename)
+    color_image_file = os.path.join(SCRIPT_DIR, color_filename)
+
     # ১. ফায়ারবেসে ডেটা সেভ
     save_to_firebase(current_data)
 
     # ২. দুটি ইমেজ জেনারেট
-    generate_thermal_image(current_data)
-    generate_color_image(current_data)
+    generate_thermal_image(current_data, thermal_image_file)
+    generate_color_image(current_data, color_image_file)
 
     old_data = None
     if os.path.exists(LAST_PRICE_FILE):
@@ -267,8 +272,8 @@ def run():
         message += f"`{clean_name} | {g_price} | {v_price} ৳`\n"
 
     timestamp = int(time.time() * 1000)
-    color_image_url = f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/main/color_price.png?t={timestamp}"
-    thermal_image_url = f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/main/thermal_print.png?t={timestamp}"
+    color_image_url = f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/main/{color_filename}?t={timestamp}"
+    thermal_image_url = f"https://raw.githubusercontent.com/{GITHUB_REPOSITORY}/main/{thermal_filename}?t={timestamp}"
 
     send_telegram_notification(message, color_image_url, thermal_image_url)
 
