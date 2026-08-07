@@ -3,7 +3,7 @@ name: Gold Price Auto Tracker
 on:
   schedule:
     # প্রতি মিনিটে রান হওয়ার কমান্ড (GitHub এর সার্ভার লোড অনুযায়ী ১-৫ মিনিট দেরি হতে পারে)
-    - cron: '* * * * *'
+    - cron: '*/1 * * * *'
   workflow_dispatch: # চাইলে ম্যানুয়ালি রান করার জন্য
 
 jobs:
