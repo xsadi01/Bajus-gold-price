@@ -1,4 +1,4 @@
 requests
+pillow
 firebase-admin
-beautifulsoup4
-Pillow
+pytz
