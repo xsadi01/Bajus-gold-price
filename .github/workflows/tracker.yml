@@ -1,52 +1,39 @@
-name: Update Gold Price and Images
+name: Gold Price Auto Tracker
 
 on:
   schedule:
-    - cron: '0/15 * * * *' # প্রতি ১ ঘণ্টা পর পর অটো রান হবে
-  workflow_dispatch:     # ম্যানুয়ালি রান করার অপশন
-
-# Push পারমিশন নিশ্চিত করার জন্য যুক্ত করা হয়েছে
-permissions:
-  contents: write
+    # প্রতি মিনিটে রান হওয়ার কমান্ড (GitHub এর সার্ভার লোড অনুযায়ী ১-৫ মিনিট দেরি হতে পারে)
+    - cron: '* * * * *'
+  workflow_dispatch: # চাইলে ম্যানুয়ালি রান করার জন্য
 
 jobs:
-  build-and-run:
+  update-price:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          persist-credentials: true # Git push এর জন্য প্রোপার টোকেন নিশ্চিত করে
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install Pillow firebase-admin pytz requests
 
-      - name: Setup Firebase Service Account Key
-        env:
-          FIREBASE_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          if [ -n "$FIREBASE_KEY" ]; then
-            echo "$FIREBASE_KEY" > serviceAccountKey.json
-          fi
-
-      - name: Run Main Script
+      - name: Run Python script
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python main.py
+        run: python main.py # আপনার মূল পাইথন ফাইলের নাম main.py না হলে সেটি পরিবর্তন করে দিন
 
-      - name: Commit and Push Updated Files
+      - name: Commit and push generated images & JSON
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add thermal_print.png color_price.png last_price.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update gold price and images [skip ci]" && git push)
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add last_price.json *.png
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update price images and last price" && git push)
