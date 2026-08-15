@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 import re
@@ -6,7 +6,7 @@ import sys
 import time
 from PIL import Image, ImageDraw, ImageFont
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, db, firestore
 import pytz
 import requests
 
@@ -17,11 +17,15 @@ GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY", "xsadi01/Bajus-gold-price")
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LAST_PRICE_FILE = os.path.join(SCRIPT_DIR, "last_price.json")
-SERVICE_ACCOUNT_FILE = os.path.join(SCRIPT_DIR, "serviceAccountKey.json")
+SERVICE_ACCOUNT_FILE = os.path.join(SCRIPT_DIR, "serviceAccount.json")
 
 TARGET_URL = "https://www.goldr.org/price.js?gttm"
 
-# নাম ছোট করার ম্যাপ
+# কালেকশন নেম
+LATEST_COLLECTION = "bajush_gold_price"
+HISTORY_COLLECTION = "bajush_gold_price_history"
+
+# নাম ছোট করার ম্যাপ (Telegram & Image এর জন্য)
 NAME_MAPPING = {
     "২২ ক্যারেট সোনার দাম": "22K-",
     "২১ ক্যারেট সোনার দাম": "21K-",
@@ -29,7 +33,17 @@ NAME_MAPPING = {
     "সনাতন পদ্ধতির সোনার দাম": "SAN-",
 }
 
+# ছবির ফরম্যাট অনুযায়ী Firestore key mapping
+FIRESTORE_KEY_MAPPING = {
+    "২২ ক্যারেট সোনার দাম": "22K",
+    "২১ ক্যারেট সোনার দাম": "21K",
+    "১৮ ক্যারেট সোনার দাম": "18K",
+    "সনাতন পদ্ধতির সোনার দাম": "Sonaton"
+}
+
 # --- ২. ফায়ারবেস সেটআপ ---
+firestore_db = None
+
 if os.path.exists(SERVICE_ACCOUNT_FILE):
     try:
         cred = credentials.Certificate(SERVICE_ACCOUNT_FILE)
@@ -39,6 +53,7 @@ if os.path.exists(SERVICE_ACCOUNT_FILE):
                 "databaseURL": "https://cal-by-sss-default-rtdb.asia-southeast1.firebasedatabase.app/"
             },
         )
+        firestore_db = firestore.client()
         print("✅ Firebase Initialized.")
     except Exception as e:
         print(f"⚠️ Firebase initialization failed: {e}")
@@ -73,11 +88,12 @@ def get_latest_market_data():
         return None
 
 
-# --- ৪. ফায়ারবেসে ডেটা সেভ করার ফাংশন ---
+# --- ৪. ফায়ারবেসে ডেটা সেভ করার ফাংশন (ছবি অনুযায়ী নিখুঁত ফরম্যাট) ---
 def save_to_firebase(data):
     if not firebase_admin._apps:
         return
 
+    # --- A. Realtime Database Update ---
     try:
         results = {}
         for item in data["goldData"]:
@@ -100,9 +116,42 @@ def save_to_firebase(data):
 
         ref = db.reference("gold_data")
         ref.set(final_data)
-        print("✅ Firebase Updated:", results)
+        print("✅ Firebase Realtime DB Updated:", results)
     except Exception as e:
-        print(f"❌ Firebase Update Error: {e}")
+        print(f"❌ Realtime DB Update Error: {e}")
+
+    # --- B. Firestore Update (ছবি অনুযায়ী ঠিক ফরম্যাট) ---
+    if firestore_db:
+        try:
+            # ছবির মতো "gold" Map Object তৈরি
+            gold_map = {}
+            for item in data["goldData"]:
+                raw_name = item.get("n", "")
+                fs_key = FIRESTORE_KEY_MAPPING.get(raw_name, raw_name)
+                bg_raw = int(round(float(item.get("bg_raw", 0))))
+                gold_map[fs_key] = bg_raw
+
+            now_utc = datetime.now(timezone.utc)
+
+            # ছবির মতো exact Firestore Payload Structure
+            firestore_payload = {
+                "fetchedAt": now_utc,   # Firestore Timestamp field
+                "gold": gold_map        # Map with 18K, 21K, 22K, Sonaton
+            }
+
+            # ১. Latest Collection Document: `bajush_gold_price/latest`
+            latest_ref = firestore_db.collection(LATEST_COLLECTION).document("latest")
+            latest_ref.set(firestore_payload)
+            print(f"✅ Firestore Latest Updated: {LATEST_COLLECTION}/latest")
+
+            # ২. History Collection Document ID (ছবিতে থাকা ISO timestamp format)
+            doc_id_iso = now_utc.isoformat()
+            history_ref = firestore_db.collection(HISTORY_COLLECTION).document(doc_id_iso)
+            history_ref.set(firestore_payload)
+            print(f"✅ Firestore History Saved: {HISTORY_COLLECTION}/{doc_id_iso}")
+
+        except Exception as e:
+            print(f"❌ Firestore Update Error: {e}")
 
 
 def get_bold_font(font_size):
@@ -152,7 +201,7 @@ def generate_thermal_image(data, file_path):
     print(f"Thermal image generated: {os.path.basename(file_path)}")
 
 
-# --- ৬. স্বচ্ছ কালার ইমেজ জেনারেটর (Zoomed / Enlarged) ---
+# --- ৬. স্বচ্ছ কালার ইমেজ জেনারেটর ---
 def generate_color_image(data, file_path):
     width = 1000
     height = 667
@@ -225,9 +274,8 @@ def run():
 
     update_date = current_data.get("updateDate", datetime.now().strftime("%Y-%m-%d"))
 
-    # তারিখ অনুযায়ী ইমেজের নাম
-    thermal_filename = f"thermal_print_{update_date}.png"
-    color_filename = f"color_price_{update_date}.png"
+    thermal_filename = f"{update_date}.png"
+    color_filename = f"{update_date}.png"
 
     thermal_image_file = os.path.join(SCRIPT_DIR, thermal_filename)
     color_image_file = os.path.join(SCRIPT_DIR, color_filename)
@@ -235,7 +283,7 @@ def run():
     # ১. ফায়ারবেসে ডেটা সেভ
     save_to_firebase(current_data)
 
-    # ২. দুটি ইমেজ জেনারেট
+    # ২. ইমেজ জেনারেট
     generate_thermal_image(current_data, thermal_image_file)
     generate_color_image(current_data, color_image_file)
 
